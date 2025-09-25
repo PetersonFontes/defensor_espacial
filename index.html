@@ -3,185 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Defensor Espacial: A Invasão</title>
+    <title>Defensor Espacial - Jogue Agora!</title>
+    <meta name="description" content="Embarque no Defensor Espacial, um viciante jogo de tiro espacial estilo arcada. Pilote a sua nave através de chuvas de meteoros e enfrente esquadrões de naves inimigas. Jogue grátis agora!">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Estilos Globais */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
             font-family: 'Orbitron', sans-serif;
             background-color: #000411;
             color: #E0E0E0;
+            touch-action: manipulation;
+        }
+        .main-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            flex-grow: 1;
+        }
+
+        /* Estilos do Jogo */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: 80vh;
+            margin: 1rem auto;
             overflow: hidden;
-            touch-action: none; /* Impede o zoom por toque */
         }
         canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: block;
             background: #000411 url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0_0_100_100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M-1,1 l2,-2 M0,100 l100,-100 M99,101 l2,-2" stroke="%231a202c" stroke-width="0.5"%3E%3C/path%E%3E%3C/svg%E');
             cursor: crosshair;
         }
-        .hud-text {
-            text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
-        }
-        .gemini-button {
-            transition: all 0.2s ease-in-out;
-        }
-        .gemini-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px currentColor, 0 0 25px currentColor;
-        }
-        .gemini-button:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        kbd {
-            background-color: #374151;
-            border-radius: 4px;
-            padding: 2px 6px;
-            border: 1px solid #6b7280;
-            font-family: monospace;
-        }
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes flashWarning {
-            0%, 100% { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; }
-            50% { color: #ff3300; text-shadow: 0 0 20px #ff3300; }
-        }
-        .warning-text {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(2rem, 10vw, 4rem);
-            font-weight: bold;
-            animation: flashWarning 1s infinite;
-            display: none;
-            z-index: 5;
-        }
+        .hud-text { text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff; }
+        .gemini-button { transition: all 0.2s ease-in-out; }
+        .gemini-button:hover { transform: scale(1.05); box-shadow: 0 0 15px currentColor, 0 0 25px currentColor; }
+        .gemini-button:disabled { cursor: not-allowed; opacity: 0.5; }
+        kbd { background-color: #374151; border-radius: 4px; padding: 2px 6px; border: 1px solid #6b7280; font-family: monospace; }
+        .spinner { border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes flashWarning { 0%, 100% { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; } 50% { color: #ff3300; text-shadow: 0 0 20px #ff3300; } }
+        .warning-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: clamp(2rem, 10vw, 4rem); font-weight: bold; animation: flashWarning 1s infinite; display: none; z-index: 5; }
 
-        #joystick-area {
-            position: absolute;
-            bottom: 40px; /* Ajustado */
-            left: 20px;
-            width: 120px;
-            height: 120px;
-            background: rgba(100, 100, 100, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-        }
-        #joystick-knob {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #action-buttons {
-            position: absolute;
-            bottom: 40px; /* Ajustado */
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-        #action-buttons button {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
+        /* Controles Mobile */
+        #joystick-area { position: absolute; bottom: 40px; left: 20px; width: 120px; height: 120px; background: rgba(100, 100, 100, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; }
+        #joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transform: translate(-50%, -50%); }
+        #action-buttons { position: absolute; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        #action-buttons button { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: bold; color: white; user-select: none; }
+        #laserButton { background-color: rgba(255, 80, 80, 0.3); border: 2px solid rgba(255, 80, 80, 0.5); }
+        #fireButton { background-color: rgba(0, 255, 255, 0.3); border: 2px solid rgba(0, 255, 255, 0.5); }
+        #historyScreen table th, #historyScreen table td { padding: 8px 12px; border: 1px solid #4a5568; }
+
+        /* Anúncios */
+        .ad-container, .ad-container-vertical, .ad-container-medium-rect {
+            margin: 20px auto;
+            background-color: #0c1221;
+            border: 1px dashed #374151;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            font-weight: bold;
-            color: white;
-            user-select: none;
+            color: #6b7280;
         }
-        #laserButton {
-            background-color: rgba(255, 80, 80, 0.3);
-            border: 2px solid rgba(255, 80, 80, 0.5);
+        .ad-container { /* Billboard e banners */
+            width: 100%;
+            max-width: 970px;
+            min-height: 90px;
         }
-        #fireButton {
-            background-color: rgba(0, 255, 255, 0.3);
-            border: 2px solid rgba(0, 255, 255, 0.5);
+        .ad-container-vertical { /* Half-page */
+            width: 300px;
+            height: 600px;
         }
-        #historyScreen table th, #historyScreen table td {
-            padding: 8px 12px;
-            border: 1px solid #4a5568;
+        .ad-container-medium-rect { /* Medium Rectangle */
+            width: 300px;
+            height: 250px;
         }
+        .sidebar-ad {
+            width: 300px;
+            padding: 20px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 1600px) { .sidebar-ad { display: none; } }
     </style>
 </head>
-<body class="flex items-center justify-center h-screen m-0">
+<body class="text-center">
 
-    <div id="startScreen" class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-85 z-20 text-center p-4">
-        <h1 class="text-4xl sm:text-6xl font-bold text-cyan-400 mb-4 hud-text">DEFENSOR ESPACIAL</h1>
-        <div class="flex items-center justify-center mb-6">
-            <input type="text" id="shipNameInput" placeholder="Nome da sua nave..." class="bg-gray-800 text-white text-center rounded-l-lg p-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 w-48 sm:w-64">
-            <button id="generateNameButton" title="Gerar nome com IA" class="bg-cyan-500 text-white font-bold p-2.5 rounded-r-lg hover:bg-cyan-600 disabled:bg-gray-500 gemini-button">✨</button>
+    <div class="main-wrapper">
+        <aside class="sidebar-ad">
+             <div class="ad-container-vertical"> <span>Anúncio Vertical (300x600)</span> </div>
+             <div class="ad-container-medium-rect"> <span>Anúncio Retângulo (300x250)</span> </div>
+        </aside>
+
+        <div class="flex-grow">
+            <main>
+                <div class="ad-container"> <span>Espaço para Anúncio (Billboard)</span> </div>
+                <h1 class="text-4xl sm:text-5xl font-bold text-cyan-400 my-8 hud-text">DEFENSOR ESPACIAL</h1>
+                <div class="max-w-4xl mx-auto text-lg text-gray-300 px-4">
+                    <p class="mb-4"> Prepare-se para uma batalha intergaláctica épica em <strong>Defensor Espacial</strong>! Inspirado nos clássicos jogos de arcada dos anos 80, este shooter espacial coloca-o no comando de uma nave de elite, a última defesa contra hordas de inimigos implacáveis e chuvas de meteoros traiçoeiras. A sua missão é sobreviver o máximo de tempo possível, acumulando pontos ao destruir tudo o que se move. </p>
+                    <p> Enfrente diferentes tipos de naves inimigas, cada uma com padrões de ataque únicos, desde os caças vermelhos mais simples aos esquivos interceptores amarelos e às patrulhas verdes. A cada 1000 pontos, prepare-se para o derradeiro desafio: uma gigantesca Nave Mãe que testará os seus reflexos e a sua estratégia. Domine o uso do seu raio laser devastador e colecione power-ups de escudo para aumentar as suas chances de sobrevivência. A sua jornada para se tornar uma lenda do espaço começa agora! </p>
+                </div>
+                <div id="game-container">
+                    <canvas id="gameCanvas" class="hidden"></canvas>
+                    <div id="startScreen" class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-85 z-20 text-center p-4">
+                         <h2 class="text-3xl font-bold mb-6">Prepare-se para a Batalha</h2>
+                        <div class="flex items-center justify-center mb-6">
+                            <input type="text" id="shipNameInput" placeholder="Nome da sua nave..." class="bg-gray-800 text-white text-center rounded-l-lg p-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 w-48 sm:w-64">
+                            <button id="generateNameButton" title="Gerar nome com IA" class="bg-cyan-500 text-white font-bold p-2.5 rounded-r-lg hover:bg-cyan-600 disabled:bg-gray-500 gemini-button">✨</button>
+                        </div>
+                        <div class="mb-6 hidden md:block">
+                            <p class="text-lg mb-2">Use as <kbd>SETAS</kbd> para mover e <kbd>ESPAÇO</kbd> para atirar.</p>
+                            <p class="text-lg">Use <kbd>Z</kbd> para o RAIO LASER!</p>
+                        </div>
+                        <div class="flex space-x-4">
+                             <button id="startButton" class="gemini-button bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-2xl shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75" style="color: #4ade80;" disabled>Iniciar Jogo</button>
+                             <button id="historyButton" class="gemini-button bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-2xl shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75" style="color: #60a5fa;">Histórico</button>
+                        </div>
+                    </div>
+                    <div id="warningText" class="warning-text">! CHEFE IMINENTE !</div>
+                    <div id="mobileControls" class="md:hidden fixed inset-0 z-30 pointer-events-none">
+                        <div id="joystick-area" class="pointer-events-auto"><div id="joystick-knob"></div></div>
+                        <div id="action-buttons" class="pointer-events-auto"><button id="laserButton">LASER</button><button id="fireButton">TIRO</button></div>
+                    </div>
+                    <div id="gameOverScreen" class="hidden absolute inset-0 flex-col items-center justify-center bg-black bg-opacity-85 z-10 text-center p-4 overflow-y-auto">
+                        <h2 class="text-5xl font-bold text-red-500 mb-2" style="text-shadow: 0 0 10px #ff0000;">GAME OVER</h2>
+                        <p class="text-3xl mb-4">Sua pontuação: <span id="finalScore" class="text-yellow-400">0</span></p>
+                        <div class="flex space-x-2 mb-4">
+                            <button id="analyzePerformanceButton" class="gemini-button bg-yellow-500 text-black font-bold py-2 px-4 rounded-lg text-md shadow-lg hover:bg-yellow-600" style="color: #f59e0b;">✨ Analisar Desempenho</button>
+                            <button id="generateLogButton" class="gemini-button bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg text-md shadow-lg hover:bg-indigo-600" style="color: #a5b4fc;">✨ Gerar Diário de Bordo</button>
+                        </div>
+                        <div id="analysisContainer" class="w-full max-w-2xl min-h-[100px] bg-gray-900 bg-opacity-50 p-4 rounded-lg border border-gray-600 mb-4 text-left text-gray-400 italic">Aguardando análise...</div>
+                        <button id="restartButton" class="gemini-button bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-2xl shadow-lg hover:bg-green-600" style="color: #4ade80;">Reiniciar (R)</button>
+                    </div>
+                    <div id="historyScreen" class="hidden absolute inset-0 flex-col items-center justify-center bg-black bg-opacity-90 z-30 p-4 overflow-y-auto">
+                        <h2 class="text-4xl font-bold text-cyan-400 mb-6 hud-text">HISTÓRICO DE PARTIDAS</h2>
+                        <div class="w-full max-w-lg max-h-[70vh] overflow-y-auto border-2 border-cyan-500 p-2 rounded-lg">
+                            <table class="w-full text-center text-lg">
+                                <thead class="sticky top-0 bg-gray-900"><tr><th class="text-yellow-400">Nave</th><th class="text-yellow-400">Pontuação</th></tr></thead>
+                                <tbody id="historyTableBody"></tbody>
+                            </table>
+                        </div>
+                        <button id="closeHistoryButton" class="gemini-button mt-6 bg-red-500 text-white font-bold py-2 px-6 rounded-lg text-xl shadow-lg hover:bg-red-600">Fechar</button>
+                    </div>
+                </div>
+            </main>
+            <footer class="text-center text-gray-500 py-4">
+                <p>&copy; 2024 Defensor Espacial. Todos os direitos reservados.</p>
+                <a href="#" class="underline hover:text-cyan-400">Política de Privacidade</a>
+            </footer>
         </div>
-        <div class="mb-6 hidden md:block">
-            <p class="text-xl mb-2">Use as <kbd>SETAS</kbd> para mover e <kbd>ESPAÇO</kbd> para atirar.</p>
-            <p class="text-xl">Aguarde o carregamento e use <kbd>Z</kbd> para o RAIO LASER!</p>
-        </div>
-        <div class="flex space-x-4">
-             <button id="startButton" class="gemini-button bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-2xl shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75" style="color: #4ade80;" disabled>Iniciar Jogo</button>
-             <button id="historyButton" class="gemini-button bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-2xl shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75" style="color: #60a5fa;">Histórico</button>
-        </div>
-    </div>
-    <canvas id="gameCanvas" class="hidden"></canvas>
-    <div id="warningText" class="warning-text">! CHEFE IMINENTE !</div>
-    <div id="mobileControls" class="md:hidden fixed inset-0 z-30 pointer-events-none">
-        <div id="joystick-area" class="pointer-events-auto">
-            <div id="joystick-knob"></div>
-        </div>
-        <div id="action-buttons" class="pointer-events-auto">
-            <button id="laserButton">LASER</button>
-            <button id="fireButton">TIRO</button>
-        </div>
-    </div>
-    <div id="gameOverScreen" class="hidden absolute inset-0 flex-col items-center justify-center bg-black bg-opacity-85 z-10 text-center p-4 overflow-y-auto">
-        <h2 class="text-5xl font-bold text-red-500 mb-2" style="text-shadow: 0 0 10px #ff0000;">GAME OVER</h2>
-        <p class="text-3xl mb-4">Sua pontuação: <span id="finalScore" class="text-yellow-400">0</span></p>
-        <div class="flex space-x-2 mb-4">
-            <button id="analyzePerformanceButton" class="gemini-button bg-yellow-500 text-black font-bold py-2 px-4 rounded-lg text-md shadow-lg hover:bg-yellow-600" style="color: #f59e0b;">✨ Analisar Desempenho</button>
-            <button id="generateLogButton" class="gemini-button bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg text-md shadow-lg hover:bg-indigo-600" style="color: #a5b4fc;">✨ Gerar Diário de Bordo</button>
-        </div>
-        <div id="analysisContainer" class="w-full max-w-2xl min-h-[100px] bg-gray-900 bg-opacity-50 p-4 rounded-lg border border-gray-600 mb-4 text-left text-gray-400 italic">
-            Aguardando análise...
-        </div>
-        <button id="restartButton" class="gemini-button bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-2xl shadow-lg hover:bg-green-600" style="color: #4ade80;">Reiniciar (R)</button>
-    </div>
-    <div id="historyScreen" class="hidden absolute inset-0 flex-col items-center justify-center bg-black bg-opacity-90 z-30 p-4 overflow-y-auto">
-        <h2 class="text-4xl font-bold text-cyan-400 mb-6 hud-text">HISTÓRICO DE PARTIDAS</h2>
-        <div class="w-full max-w-lg max-h-[70vh] overflow-y-auto border-2 border-cyan-500 p-2 rounded-lg">
-            <table class="w-full text-center text-lg">
-                <thead class="sticky top-0 bg-gray-900">
-                    <tr>
-                        <th class="text-yellow-400">Nave</th>
-                        <th class="text-yellow-400">Pontuação</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody"></tbody>
-            </table>
-        </div>
-        <button id="closeHistoryButton" class="gemini-button mt-6 bg-red-500 text-white font-bold py-2 px-6 rounded-lg text-xl shadow-lg hover:bg-red-600">Fechar</button>
+
+        <aside class="sidebar-ad">
+            <div class="ad-container-vertical"> <span>Anúncio Vertical (300x600)</span> </div>
+            <div class="ad-container-medium-rect"> <span>Anúncio Retângulo (300x250)</span> </div>
+       </aside>
     </div>
 
     <script>
@@ -210,13 +199,23 @@
         let kick, hihat, bassSynth, melodySeq;
         let isAudioReady = false;
 
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; muteButton.x = canvas.width - 50; }
+        let isRapidFireActive = false, rapidFireUntil = 0;
+        let isDoubleShotActive = false, doubleShotUntil = 0;
+
+        function resizeCanvas() { 
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            muteButton.x = canvas.width - 50; 
+        }
+
         function initializeGame() {
             resizeCanvas(); score = 0; lives = 5; difficultyLevel = 1; gameOver = false; gameRunning = true; ship.x = canvas.width / 2 - 25; ship.y = canvas.height - 80; ship.shieldHealth = 0;
             [bullets, meteors, particles, powerups, enemies, enemyBullets].forEach(arr => arr.length = 0);
             stars.length = 0; for (let i = 0; i < 150; i++) { stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 + 0.5, speed: Math.random() * 1.5 + 0.5 }); }
             lastMeteorSpawn = 0; lastEnemySpawn = 0; boss = null; isBossActive = false; nextBossScore = 1000; firstBossDefeated = false; bossesDefeated = 0;
             laserCharge = 100; lastLaserTime = -laserCooldown; isLaserActive = false;
+            isRapidFireActive = false; rapidFireUntil = 0; isDoubleShotActive = false; doubleShotUntil = 0;
             commsChatter = { text: '', alpha: 0, life: 0, maxLife: 240, color: '#00ffff' }; lastChatterRequest = Date.now(); gameStartTime = Date.now();
             currentShipName = shipNameInput.value || 'Defensor Anónimo';
             gameOverScreen.classList.add('hidden'); gameOverScreen.classList.remove('flex'); analysisContainer.innerHTML = 'Aguardando análise...'; analysisContainer.classList.add('italic', 'text-gray-400');
